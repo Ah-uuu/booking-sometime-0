@@ -62,6 +62,11 @@
         </option>
       </select>
 
+      <!-- 新增「今日可預約時段」按鈕 -->
+      <button type="button" @click="checkAvailableTimes" class="available-times-button">
+        今日可預約時段
+      </button>
+
       <!-- 提交按鈕 -->
       <button type="submit">送出預約</button>
     </form>
@@ -184,6 +189,38 @@ export default {
       if (!isLateHour) return false;
       return duration > 70; // 70 分鐘以上的項目禁用（不包含 70 分鐘）
     },
+    async checkAvailableTimes() {
+      try {
+        if (!this.formData.service) {
+          this.message = { success: false, text: '請選擇按摩項目！' };
+          setTimeout(() => this.message = null, 5000);
+          return;
+        }
+        const response = await axios.get(`https://booking-k1q8.onrender.com/available-times?service=${this.formData.service}`);
+        if (response.data.success) {
+          this.message = {
+            success: true,
+            text: `今日最快可預約時段：${response.data.nextAvailableTime}`,
+          };
+          // 自動填充預約時間（可選）
+          const [date, time] = response.data.nextAvailableTime.split(' ');
+          const [hour, minute] = time.split(':');
+          this.formData.appointmentDate = date;
+          this.formData.appointmentHour = hour;
+          this.formData.appointmentMinutes = minute;
+        } else {
+          this.message = { success: false, text: response.data.message };
+        }
+        setTimeout(() => this.message = null, 5000);
+      } catch (error) {
+        console.error('查詢可用時段時發生錯誤：', error);
+        this.message = {
+          success: false,
+          text: error.response?.data?.message || '查詢可用時段失敗，請稍後再試！',
+        };
+        setTimeout(() => this.message = null, 5000);
+      }
+    },
     async submitForm() {
       console.log('預約資料：', this.formData);
 
@@ -205,7 +242,7 @@ export default {
         const response = await axios.post('https://booking-k1q8.onrender.com/booking', payload);
 
         if (response.data.success) {
-          let startTime = new Date(response.data.appointmentTime || payload.appointmentTime);
+          let startTime = new Date(payload.appointmentTime);
           const serviceParts = this.formData.service.split('_');
           const serviceName = serviceParts[0];
           const duration = parseInt(serviceParts[1], 10);
@@ -242,16 +279,12 @@ export default {
       } catch (error) {
         console.error('提交預約時發生錯誤：', error);
         const errorMessage = error.response?.data?.message || '預約提交失敗，請稍後再試！';
-        const nextAvailableTime = error.response?.data?.nextAvailableTime || null;
-
-        let displayMessage = errorMessage;
-        if (nextAvailableTime) {
-          displayMessage += `\n目前最快可預約時段：${nextAvailableTime}`;
-        }
 
         this.message = {
           success: false,
-          text: displayMessage,
+          text: errorMessage.includes('請點擊「今日可預約時段」')
+            ? errorMessage
+            : `${errorMessage}\n${error.response?.data?.nextAvailableTime ? `目前最快可預約時段：${error.response.data.nextAvailableTime}` : ''}`,
         };
         setTimeout(() => {
           this.message = null;
@@ -297,7 +330,7 @@ select option:disabled {
 }
 
 button {
-  margin-top: 15px;
+  margin-top: 10px;
   padding: 10px;
   width: 100%;
   background: #007bff;
@@ -307,8 +340,20 @@ button {
   cursor: pointer;
 }
 
-button:hover {
-  background: #0056b3;
+.available-times-button {
+  margin-top: 10px;
+  padding: 10px;
+  width: 100%;
+  background: #28a745; /* 綠色按鈕，與提交按鈕區別 */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover,
+.available-times-button:hover {
+  opacity: 0.9;
 }
 
 .message {
