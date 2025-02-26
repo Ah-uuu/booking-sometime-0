@@ -83,6 +83,7 @@
 
 <script>
 import axios from 'axios';
+import moment from 'moment-timezone';
 
 export default {
   data() {
@@ -196,7 +197,8 @@ export default {
           setTimeout(() => this.message = null, 5000);
           return;
         }
-        const response = await axios.get(`https://booking-k1q8.onrender.com/available-times?service=${this.formData.service}`);
+        const today = moment.tz(new Date(), 'Asia/Taipei').format('YYYY-MM-DD');
+        const response = await axios.get(`https://booking-k1q8.onrender.com/available-times?service=${this.formData.service}&date=${today}`);
         if (response.data.success) {
           this.message = {
             success: true,
