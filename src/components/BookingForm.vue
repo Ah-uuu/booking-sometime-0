@@ -197,13 +197,14 @@ export default {
           setTimeout(() => this.message = null, 5000);
           return;
         }
-        const response = await axios.get(`https://booking-k1q8.onrender.com/available-times?service=${this.formData.service}&date=${this.formData.appointmentDate}`);
+        const formattedDate = moment.tz(this.formData.appointmentDate, 'Asia/Taipei').format('YYYY-MM-DD');
+        const response = await axios.get(`https://booking-k1q8.onrender.com/available-times?service=${encodeURIComponent(this.formData.service)}&date=${encodeURIComponent(formattedDate)}`);
         if (response.data.success) {
           this.message = {
             success: true,
             text: `當日最快可預約時段：${response.data.nextAvailableTime}`,
           };
-          // 自動填充預約時間（可選）
+          // 自動填充預約時間
           const [date, time] = response.data.nextAvailableTime.split(' ');
           const [hour, minute] = time.split(':');
           this.formData.appointmentDate = date;
