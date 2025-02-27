@@ -62,9 +62,9 @@
         </option>
       </select>
 
-      <!-- 新增「今日可預約時段」按鈕 -->
+      <!-- 新增「當日可預約時段」按鈕 -->
       <button type="button" @click="checkAvailableTimes" class="available-times-button">
-        今日可預約時段
+        當日可預約時段
       </button>
 
       <!-- 提交按鈕 -->
@@ -192,17 +192,16 @@ export default {
     },
     async checkAvailableTimes() {
       try {
-        if (!this.formData.service) {
-          this.message = { success: false, text: '請選擇按摩項目！' };
+        if (!this.formData.service || !this.formData.appointmentDate) {
+          this.message = { success: false, text: '請選擇按摩項目和日期！' };
           setTimeout(() => this.message = null, 5000);
           return;
         }
-        const today = moment.tz(new Date(), 'Asia/Taipei').format('YYYY-MM-DD');
-        const response = await axios.get(`https://booking-k1q8.onrender.com/available-times?service=${this.formData.service}&date=${today}`);
+        const response = await axios.get(`https://booking-k1q8.onrender.com/available-times?service=${this.formData.service}&date=${this.formData.appointmentDate}`);
         if (response.data.success) {
           this.message = {
             success: true,
-            text: `今日最快可預約時段：${response.data.nextAvailableTime}`,
+            text: `當日最快可預約時段：${response.data.nextAvailableTime}`,
           };
           // 自動填充預約時間（可選）
           const [date, time] = response.data.nextAvailableTime.split(' ');
@@ -284,7 +283,7 @@ export default {
 
         this.message = {
           success: false,
-          text: errorMessage.includes('請點擊「今日可預約時段」')
+          text: errorMessage.includes('請點擊「當日可預約時段」')
             ? errorMessage
             : `${errorMessage}\n${error.response?.data?.nextAvailableTime ? `目前最快可預約時段：${error.response.data.nextAvailableTime}` : ''}`,
         };
