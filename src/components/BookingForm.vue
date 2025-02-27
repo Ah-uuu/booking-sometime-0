@@ -76,11 +76,6 @@
       <p>{{ message.text }}</p>
     </div>
 
-    <!-- 排查進行中提示 -->
-    <div v-if="isLoading" class="loading-message">
-      <p>排查進行中 過程需要數秒 請稍等片刻...</p>
-    </div>
-
     <!-- 版權標示 -->
     <p class="footer">Made by 阿u</p>
   </div>
@@ -103,7 +98,6 @@ export default {
         appointmentMinutes: '00',
       },
       message: null,
-      isLoading: false, // 添加 loading 狀態
       serviceDurations: {
         '半身按摩_30': 30,
         '半身按摩_60': 60,
@@ -204,7 +198,6 @@ export default {
           return;
         }
         // 顯示排查進行中提示
-        this.isLoading = true;
         this.message = { success: false, text: '排查進行中 過程需要數秒 請稍等片刻...' };
 
         const response = await axios.get(`https://booking-k1q8.onrender.com/available-times?service=${this.formData.service}&date=${this.formData.appointmentDate}`);
@@ -229,8 +222,7 @@ export default {
           text: error.response?.data?.message || '查詢可用時段失敗，請稍後再試！',
         };
       } finally {
-        // 隱藏排查進行中提示，顯示最終訊息
-        this.isLoading = false;
+        // 5 秒後清除訊息
         setTimeout(() => this.message = null, 5000);
       }
     },
