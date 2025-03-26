@@ -148,12 +148,12 @@ export default {
         { value: '半身按摩_30', label: '半身按摩 (30 分鐘)', duration: 30 },
         { value: '半身按摩_60', label: '半身按摩 (60 分鐘)', duration: 60 },
         { value: '全身按摩_60', label: '全身按摩 (60 分鐘)', duration: 60 },
-        { value: '全身按摩_90', label: '全身按摩 (90 分鐘)', duration: 60 },
+        { value: '全身按摩_90', label: '全身按摩 (90 分鐘)', duration: 90 },
         { value: '全身按摩_120', label: '全身按摩 (120 分鐘)', duration: 120 },
         { value: '全身按摩_150', label: '全身按摩 (150 分鐘)', duration: 150 },
         { value: '腳底按摩_40', label: '腳底按摩 (40 分鐘)', duration: 40 },
         { value: '腳底按摩_70', label: '腳底按摩 (70 分鐘)', duration: 70 },
-        { value: '腳底+半 BODY_70', label: '腳底+半身 (70 分鐘)', duration: 70 },
+        { value: '腳底+半身_70', label: '腳底+半身 (70 分鐘)', duration: 70 },
         { value: '腳底+全身_100', label: '腳底+全身 (100 分鐘)', duration: 100 },
         { value: '腳底+全身_130', label: '腳底+全身 (130 分鐘)', duration: 130 },
       ];
@@ -333,6 +333,9 @@ export default {
 </script>
 
 <style scoped>
+/* 引入 Google Fonts 的 Noto Serif TC 字體 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700&display=swap');
+
 /* 整體容器 */
 .booking-form {
   max-width: 400px;
@@ -341,7 +344,7 @@ export default {
   background-color: #FFFFFF; /* 白色背景 */
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Noto Serif TC', serif; /* 使用文青風格字體 */
 }
 
 /* 標題 */
@@ -371,21 +374,30 @@ select {
   border: 2px solid #678772; /* 柔和青綠色邊框 */
   border-radius: 8px;
   font-size: 16px;
+  Ascending; /* 深灰色文字 */
   background-color: #F5F5F5; /* 淺灰色背景 */
   transition: border-color 0.3s ease;
+  font-family: 'Noto Serif TC', serif; /* 應用字體 */
+  color: #333333; /* 深灰色文字 */
 }
 
+/* 確保下拉選單的選項文字顏色為深灰色 */
+select option {
+  color: #333333; /* 深灰色文字 */
+}
+
+/* 禁用選項 */
+select option:disabled {
+  color: #999999; /* 禁用選項使用較淺的灰色 */
+  background-color: #E0E0E0;
+}
+
+/* 確保聚焦時的樣式 */
 input:focus,
 select:focus {
   outline: none;
   border-color: #305450; /* 聚焦時邊框變為深青綠色 */
   background-color: #FFFFFF;
-}
-
-/* 禁用選項 */
-select option:disabled {
-  color: #999999;
-  background-color: #E0E0E0;
 }
 
 /* 按鈕 */
@@ -401,6 +413,7 @@ button {
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  font-family: 'Noto Serif TC', serif; /* 應用字體 */
 }
 
 button:hover {
@@ -424,6 +437,7 @@ button:hover {
   text-align: center;
   font-size: 14px;
   white-space: pre-line;
+  font-family: 'Noto Serif TC', serif; /* 應用字體 */
 }
 
 .success-message {
@@ -442,5 +456,6 @@ button:hover {
   margin-top: 30px;
   font-size: 12px;
   color: #678772; /* 柔和青綠色 */
+  font-family: 'Noto Serif TC', serif; /* 應用字體 */
 }
 </style>
