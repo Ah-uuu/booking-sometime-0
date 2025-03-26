@@ -1,5 +1,9 @@
 <template>
   <div class="booking-form">
+    <!-- 加入 LOGO -->
+    <div class="logo-container">
+      <img src="path-to-your-logo.png" alt="桑time LOGO" class="logo" />
+    </div>
     <h2 class="title">桑time線上預約系統</h2>
     <form @submit.prevent="submitForm">
       <!-- 姓名 -->
@@ -333,88 +337,125 @@ export default {
 </script>
 
 <style scoped>
+/* 整體容器 */
 .booking-form {
   max-width: 400px;
-  margin: auto;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #FFFFFF; /* 白色背景 */
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  font-family: 'Roboto', sans-serif;
 }
 
+/* LOGO 容器 */
+.logo-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.logo {
+  width: 100px; /* 調整 LOGO 大小 */
+  height: 100px;
+}
+
+/* 標題 */
 .title {
-  color: black;
+  color: #305450; /* 深青綠色 */
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 20px;
 }
 
+/* 標籤 */
 .label {
-  color: black;
+  color: #305450; /* 深青綠色 */
   display: block;
-  margin-top: 10px;
+  margin-top: 15px;
+  font-size: 16px;
+  font-weight: 500;
 }
 
+/* 輸入框和下拉選單 */
 input,
 select {
   width: 100%;
-  padding: 8px;
+  padding: 10px;
   margin-top: 5px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 2px solid #678772; /* 柔和青綠色邊框 */
+  border-radius: 8px;
+  font-size: 16px;
+  background-color: #F5F5F5; /* 淺灰色背景 */
+  transition: border-color 0.3s ease;
 }
 
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #305450; /* 聚焦時邊框變為深青綠色 */
+  background-color: #FFFFFF;
+}
+
+/* 禁用選項 */
 select option:disabled {
-  color: gray;
-  background-color: #f0f0f0;
+  color: #999999;
+  background-color: #E0E0E0;
 }
 
+/* 按鈕 */
 button {
-  margin-top: 10px;
-  padding: 10px;
+  margin-top: 20px;
+  padding: 12px;
   width: 100%;
-  background: #007bff;
-  color: white;
+  background: #305450; /* 深青綠色 */
+  color: #FFFFFF;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
+button:hover {
+  background: #3E6A66; /* 稍微變亮 */
+}
+
+/* 當日可預約時段按鈕 */
 .available-times-button {
-  margin-top: 10px;
-  padding: 10px;
-  width: 100%;
-  background: #28a745;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  background: #678772; /* 柔和青綠色 */
 }
 
-button:hover,
 .available-times-button:hover {
-  opacity: 0.9;
+  background: #74917C; /* 稍微變亮 */
 }
 
+/* 訊息提示 */
 .message {
   margin-top: 20px;
-  padding: 10px;
-  border-radius: 4px;
+  padding: 12px;
+  border-radius: 8px;
   text-align: center;
+  font-size: 14px;
   white-space: pre-line;
 }
 
 .success-message {
-  background-color: #4caf50;
-  color: white;
+  background-color: #678772; /* 柔和青綠色 */
+  color: #FFFFFF;
 }
 
 .error-message {
-  background-color: #f44336;
-  color: white;
+  background-color: #F44336; /* 柔和紅色 */
+  color: #FFFFFF;
 }
 
+/* 版權標示 */
 .footer {
   text-align: center;
-  margin-top: 20px;
+  margin-top: 30px;
   font-size: 12px;
-  color: gray;
+  color: #678772; /* 柔和青綠色 */
 }
 </style>
