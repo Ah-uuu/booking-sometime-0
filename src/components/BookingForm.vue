@@ -76,9 +76,12 @@
       <button type="submit">送出預約</button>
     </form>
 
-    <!-- 回應訊息 -->
-    <div v-if="message" class="message" :class="{ 'success-message': message.success, 'error-message': !message.success }">
-      <p>{{ message.text }}</p>
+    <!-- 彈出視窗 -->
+    <div v-if="showModal" class="modal-overlay">
+      <div class="modal-content" :class="{ 'success-modal': message.success, 'error-modal': !message.success }">
+        <p>{{ message.text }}</p>
+        <button @click="closeModal" class="modal-button">確定</button>
+      </div>
     </div>
 
     <!-- 版權標示 -->
@@ -103,6 +106,7 @@ export default {
         appointmentMinutes: '00',
       },
       message: null,
+      showModal: false, // 控制彈出視窗的顯示
       serviceDurations: {
         '半身按摩_30': 30,
         '半身按摩_60': 60,
@@ -230,10 +234,11 @@ export default {
       try {
         if (!this.formData.service || !this.formData.appointmentDate) {
           this.message = { success: false, text: '請選擇按摩項目和日期！' };
-          setTimeout(() => this.message = null, 5000);
+          this.showModal = true; // 顯示彈出視窗
           return;
         }
         this.message = { success: false, text: '排查進行中 過程需要數秒 請稍等片刻...' };
+        this.showModal = true; // 顯示彈出視窗
 
         const response = await axios.get(`https://booking-k1q8.onrender.com/available-times?service=${this.formData.service}&date=${this.formData.appointmentDate}`);
         if (response.data.success) {
@@ -256,8 +261,6 @@ export default {
           success: false,
           text: error.response?.data?.message || '查詢可用時段失敗，請稍後再試！',
         };
-      } finally {
-        setTimeout(() => this.message = null, 5000);
       }
     },
     async submitForm() {
@@ -298,8 +301,9 @@ export default {
 
           this.message = {
             success: true,
-            text: `預約成功！預約時間：\n${timeSegments.join('\n')}`,
+            text: `預約成功！預約時間：\n${timeSegments.join('\n')}\n(提醒您!!可截圖此畫面以免忘記預約的時段)`,
           };
+          this.showModal = true; // 顯示彈出視窗
 
           this.formData.name = '';
           this.formData.phone = '';
@@ -308,10 +312,6 @@ export default {
           this.formData.appointmentDate = '';
           this.formData.appointmentHour = '';
           this.formData.appointmentMinutes = '00';
-
-          setTimeout(() => {
-            this.message = null;
-          }, 5000);
         }
       } catch (error) {
         console.error('提交預約時發生錯誤：', error);
@@ -323,10 +323,12 @@ export default {
             ? errorMessage
             : `${errorMessage}\n${error.response?.data?.nextAvailableTime ? `目前最快可預約時段：${error.response.data.nextAvailableTime}` : ''}`,
         };
-        setTimeout(() => {
-          this.message = null;
-        }, 5000);
+        this.showModal = true; // 顯示彈出視窗
       }
+    },
+    closeModal() {
+      this.showModal = false; // 關閉彈出視窗
+      this.message = null; // 清空訊息
     },
   },
 };
@@ -431,25 +433,58 @@ button:hover {
   background: #74917C; /* 稍微變亮 */
 }
 
-/* 訊息提示 */
-.message {
-  margin-top: 20px;
-  padding: 12px;
-  border-radius: 8px;
-  text-align: center;
-  font-size: 14px;
-  white-space: pre-line;
-  font-family: 'Noto Serif TC', serif; /* 應用字體 */
+/* 彈出視窗樣式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* 半透明背景 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
-.success-message {
+.modal-content {
+  max-width: 90%;
+  width: 400px;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 16px;
+  white-space: pre-line;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.success-modal {
   background-color: #678772; /* 柔和青綠色 */
   color: #FFFFFF;
 }
 
-.error-message {
+.error-modal {
   background-color: #F44336; /* 柔和紅色 */
   color: #FFFFFF;
+}
+
+.modal-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background: #305450; /* 深青綠色 */
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-family: 'Noto Serif TC', serif;
+}
+
+.modal-button:hover {
+  background: #3E6A66; /* 稍微變亮 */
 }
 
 /* 版權標示 */
