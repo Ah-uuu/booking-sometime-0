@@ -341,7 +341,10 @@ export default {
   max-width: 400px;
   margin: 40px auto;
   padding: 30px;
-  background-color: #FFFFFF; /* 白色背景 */
+  background-color: #FFFFFF; /* 白色背景，作為備用 */
+  background-image: url('/paper-texture.jpg'); /* 紙張紋理背景 */
+  background-repeat: repeat; /* 平鋪背景 */
+  background-size: auto; /* 保持紋理圖片的原始大小，適當平鋪 */
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   font-family: 'Noto Serif TC', serif; /* 使用文青風格字體 */
