@@ -374,7 +374,6 @@ select {
   border: 2px solid #678772; /* 柔和青綠色邊框 */
   border-radius: 8px;
   font-size: 16px;
-  Ascending; /* 深灰色文字 */
   background-color: #F5F5F5; /* 淺灰色背景 */
   transition: border-color 0.3s ease;
   font-family: 'Noto Serif TC', serif; /* 應用字體 */
