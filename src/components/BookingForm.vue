@@ -17,7 +17,12 @@
       <!-- 預約幾點 -->
       <label for="appointmentHour" class="label">預約幾點：</label>
       <select id="appointmentHour" v-model="formData.appointmentHour" @change="updateOptions" required>
-        <option v-for="hour in availableHours" :key="hour" :value="hour">
+        <option
+          v-for="hour in availableHours"
+          :key="hour"
+          :value="hour"
+          :disabled="isHourDisabled(hour)"
+        >
           {{ hour }}:00
         </option>
       </select>
@@ -126,7 +131,6 @@ export default {
       if (!this.formData.appointmentDate) return [];
       const selectedDate = new Date(this.formData.appointmentDate);
       const dayOfWeek = selectedDate.getDay();
-      
       const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 4;
       const startHour = isWeekday ? 12 : 13;
       const endHour = isWeekday ? 21 : 22;
@@ -162,22 +166,54 @@ export default {
       const dayOfWeek = selectedDate.getDay();
       return offDays.includes(dayOfWeek);
     },
+    isHourDisabled(hour) {
+      if (!this.formData.appointmentDate) return false;
+      const selectedDate = new Date(this.formData.appointmentDate);
+      const isToday = selectedDate.toDateString() === new Date().toDateString();
+      if (!isToday) return false;
+
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const hourNum = parseInt(hour);
+
+      return hourNum < currentHour || (hourNum === currentHour && currentMinute >= 50);
+    },
     updateOptions() {
       if (this.availableHours.length > 0 && !this.availableHours.includes(this.formData.appointmentHour)) {
         this.formData.appointmentHour = this.availableHours[0];
       }
-      this.updateMinutesOptions(); // 同步更新分鐘選項
+      this.updateMinutesOptions();
       this.$forceUpdate();
     },
     updateMinutesOptions() {
+      if (!this.formData.appointmentHour) return;
+
+      const selectedDate = new Date(this.formData.appointmentDate);
+      const isToday = selectedDate.toDateString() === new Date().toDateString();
+      const currentHour = new Date().getHours();
+      const currentMinute = new Date().getMinutes();
+
       if (this.formData.appointmentHour === '21' || this.formData.appointmentHour === '22') {
         this.formData.appointmentMinutes = '00';
+      } else if (isToday && parseInt(this.formData.appointmentHour) === currentHour) {
+        const nextAvailableMinute = this.availableMinutes.find(minute => parseInt(minute) > currentMinute);
+        this.formData.appointmentMinutes = nextAvailableMinute || this.availableMinutes[this.availableMinutes.length - 1];
       }
     },
     isMinuteDisabled(minute) {
       if (!this.formData.appointmentHour) return false;
+      const selectedDate = new Date(this.formData.appointmentDate);
+      const isToday = selectedDate.toDateString() === new Date().toDateString();
+      const currentHour = new Date().getHours();
+      const currentMinute = new Date().getMinutes();
       const isLateHour = this.formData.appointmentHour === '21' || this.formData.appointmentHour === '22';
-      return isLateHour && minute !== '00';
+
+      if (isLateHour) return minute !== '00';
+      if (isToday && parseInt(this.formData.appointmentHour) === currentHour) {
+        return parseInt(minute) <= currentMinute;
+      }
+      return false;
     },
     isServiceDisabled(duration) {
       if (!this.formData.appointmentDate || !this.formData.appointmentHour) return false;
@@ -188,7 +224,7 @@ export default {
                         (!isWeekday && this.formData.appointmentHour === '22');
       
       if (!isLateHour) return false;
-      return duration > 70; // 70 分鐘以上的項目禁用（不包含 70 分鐘）
+      return duration > 70;
     },
     async checkAvailableTimes() {
       try {
@@ -197,18 +233,17 @@ export default {
           setTimeout(() => this.message = null, 5000);
           return;
         }
-        // 顯示排查進行中提示
         this.message = { success: false, text: '排查進行中 過程需要數秒 請稍等片刻...' };
 
         const response = await axios.get(`https://booking-k1q8.onrender.com/available-times?service=${this.formData.service}&date=${this.formData.appointmentDate}`);
         if (response.data.success) {
+          const nextAvailableTime = response.data.nextAvailableTime;
+          const [date, time] = nextAvailableTime.split(' ');
+          const [hour, minute] = time.split(':');
           this.message = {
             success: true,
-            text: `當日最快可預約時段：${response.data.nextAvailableTime}`,
+            text: `當日最快可預約時段：${nextAvailableTime}`,
           };
-          // 自動填充預約時間（可選）
-          const [date, time] = response.data.nextAvailableTime.split(' ');
-          const [hour, minute] = time.split(':');
           this.formData.appointmentDate = date;
           this.formData.appointmentHour = hour;
           this.formData.appointmentMinutes = minute;
@@ -222,23 +257,20 @@ export default {
           text: error.response?.data?.message || '查詢可用時段失敗，請稍後再試！',
         };
       } finally {
-        // 5 秒後清除訊息
         setTimeout(() => this.message = null, 5000);
       }
     },
     async submitForm() {
       console.log('預約資料：', this.formData);
 
-      // 提交完整的 service 格式（例如 "半身按摩_30"）
       const service = this.formData.service;
-
       const appointmentTimeLocal = `${this.formData.appointmentDate}T${this.formData.appointmentHour}:${this.formData.appointmentMinutes.padStart(2, '0')}:00+08:00`;
       const appointmentTime = new Date(appointmentTimeLocal);
 
       const payload = {
         name: this.formData.name,
         phone: this.formData.phone,
-        service: service, // 傳完整的服務名稱_時長
+        service: service,
         appointmentTime: appointmentTime.toISOString(),
         master: this.formData.master || undefined,
       };
@@ -256,7 +288,7 @@ export default {
             ? serviceName.split('+').map(s => s.trim())
             : [serviceName];
           const durationPerSegment = isComposite
-            ? [40, duration - 40] // 腳底固定 40 分鐘，其餘分配
+            ? [40, duration - 40]
             : [duration];
           const timeSegments = segments.map((seg, index) => {
             const segmentStart = new Date(startTime.getTime() + (index === 0 ? 0 : durationPerSegment[0]) * 60000);
@@ -349,7 +381,7 @@ button {
   margin-top: 10px;
   padding: 10px;
   width: 100%;
-  background: #28a745; /* 綠色按鈕，與提交按鈕區別 */
+  background: #28a745;
   color: white;
   border: none;
   border-radius: 4px;
@@ -377,15 +409,6 @@ button:hover,
 .error-message {
   background-color: #f44336;
   color: white;
-}
-
-.loading-message {
-  margin-top: 20px;
-  padding: 10px;
-  border-radius: 4px;
-  text-align: center;
-  background-color: #ffeb3b; /* 黃色提示 */
-  color: #333;
 }
 
 .footer {
