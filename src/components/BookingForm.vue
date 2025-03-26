@@ -40,32 +40,49 @@
         </option>
       </select>
 
-      <!-- 按摩項目（含時長） -->
-      <label for="service" class="label">按摩項目：</label>
-      <select id="service" v-model="formData.service" required>
-        <option
-          v-for="option in serviceOptions"
-          :key="option.value"
-          :value="option.value"
-          :disabled="isServiceDisabled(option.duration)"
-        >
-          {{ option.label }}
+      <!-- 人數 -->
+      <label for="numPeople" class="label">人數：</label>
+      <select id="numPeople" v-model="formData.numPeople" @change="updateGuests">
+        <option v-for="num in [1, 2, 3]" :key="num" :value="num">
+          {{ num }} 人
         </option>
       </select>
 
-      <!-- 指定師傅 -->
-      <label for="master" class="label">指定師傅（可選）：</label>
-      <select id="master" v-model="formData.master">
-        <option value="">不指定</option>
-        <option
-          v-for="therapist in therapists"
-          :key="therapist.name"
-          :value="therapist.name"
-          :disabled="isTherapistOff(therapist.offDays)"
+      <!-- 按摩項目與指定師傅（動態渲染） -->
+      <div v-for="(guest, index) in formData.guests" :key="index" class="guest-section">
+        <h3 class="guest-title">顧客 {{ String.fromCharCode(65 + index) }}</h3>
+
+        <!-- 按摩項目 -->
+        <label :for="'service-' + index" class="label">按摩項目：</label>
+        <select
+          :id="'service-' + index"
+          v-model="guest.service"
+          required
         >
-          {{ therapist.name }} ({{ therapist.offDaysText }})
-        </option>
-      </select>
+          <option
+            v-for="option in serviceOptions"
+            :key="option.value"
+            :value="option.value"
+            :disabled="isServiceDisabled(option.duration)"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+
+        <!-- 指定師傅 -->
+        <label :for="'master-' + index" class="label">指定師傅（可選）：</label>
+        <select :id="'master-' + index" v-model="guest.master">
+          <option value="">不指定</option>
+          <option
+            v-for="therapist in therapists"
+            :key="therapist.name"
+            :value="therapist.name"
+            :disabled="isTherapistOff(therapist.offDays)"
+          >
+            {{ therapist.name }} ({{ therapist.offDaysText }})
+          </option>
+        </select>
+      </div>
 
       <!-- 新增「當日可預約時段」按鈕 -->
       <button type="button" @click="checkAvailableTimes" class="available-times-button">
@@ -99,8 +116,8 @@ export default {
       formData: {
         name: '',
         phone: '',
-        service: '',
-        master: '',
+        numPeople: 1, // 預設 1 人
+        guests: [{ service: '', master: '' }], // 顧客陣列，初始為 1 人
         appointmentDate: '',
         appointmentHour: '',
         appointmentMinutes: '00',
@@ -166,6 +183,13 @@ export default {
     },
   },
   methods: {
+    updateGuests() {
+      const numPeople = this.formData.numPeople;
+      this.formData.guests = Array.from({ length: numPeople }, () => ({
+        service: '',
+        master: '',
+      }));
+    },
     isTherapistOff(offDays) {
       if (!this.formData.appointmentDate) return false;
       const selectedDate = new Date(this.formData.appointmentDate);
@@ -200,7 +224,6 @@ export default {
       const currentHour = new Date().getHours();
       const currentMinute = new Date().getMinutes();
 
-      // 根據日期判斷是否為週一到週四或週五到週日
       const dayOfWeek = selectedDate.getDay();
       const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 4;
       const lastHour = isWeekday ? '21' : '22';
@@ -219,12 +242,10 @@ export default {
       const currentHour = new Date().getHours();
       const currentMinute = new Date().getMinutes();
 
-      // 根據日期判斷是否為週一到週四或週五到週日
       const dayOfWeek = selectedDate.getDay();
       const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 4;
-      const lastHour = isWeekday ? '21' : '22'; // 週一到週四的最後一小時是 21:00，週五到週日是 22:00
+      const lastHour = isWeekday ? '21' : '22';
 
-      // 如果選擇的是最後一小時（週一到週四的 21:00 或週五到週日的 22:00），只能選 00 分
       const isLastHour = this.formData.appointmentHour === lastHour;
 
       if (isLastHour) return minute !== '00';
@@ -246,15 +267,22 @@ export default {
     },
     async checkAvailableTimes() {
       try {
-        if (!this.formData.service || !this.formData.appointmentDate) {
-          this.message = { success: false, text: '請選擇按摩項目和日期！' };
+        if (!this.formData.guests.every(guest => guest.service) || !this.formData.appointmentDate) {
+          this.message = { success: false, text: '請為所有顧客選擇按摩項目和日期！' };
           this.showModal = true;
           return;
         }
         this.message = { success: false, text: '排查進行中 過程需要數秒 請稍等片刻...' };
         this.showModal = true;
 
-        const response = await axios.get(`https://booking-k1q8.onrender.com/available-times?service=${this.formData.service}&date=${this.formData.appointmentDate}`);
+        const services = this.formData.guests.map(guest => guest.service);
+        const response = await axios.get(`https://booking-k1q8.onrender.com/available-times`, {
+          params: {
+            services: JSON.stringify(services),
+            date: this.formData.appointmentDate,
+          },
+        });
+
         if (response.data.success) {
           const nextAvailableTime = response.data.nextAvailableTime;
           const [date, time] = nextAvailableTime.split(' ');
@@ -276,53 +304,60 @@ export default {
           text: error.response?.data?.message || '查詢可用時段失敗，請稍後再試！',
         };
       }
+      this.showModal = true;
     },
     async submitForm() {
       console.log('預約資料：', this.formData);
 
-      const service = this.formData.service;
       const appointmentTimeLocal = `${this.formData.appointmentDate}T${this.formData.appointmentHour}:${this.formData.appointmentMinutes.padStart(2, '0')}:00+08:00`;
       const appointmentTime = new Date(appointmentTimeLocal);
 
       const payload = {
         name: this.formData.name,
         phone: this.formData.phone,
-        service: service,
+        guests: this.formData.guests.map(guest => ({
+          service: guest.service,
+          master: guest.master || undefined,
+        })),
         appointmentTime: appointmentTime.toISOString(),
-        master: this.formData.master || undefined,
       };
 
       try {
         const response = await axios.post('https://booking-k1q8.onrender.com/booking', payload);
 
         if (response.data.success) {
-          let startTime = new Date(payload.appointmentTime);
-          const serviceParts = this.formData.service.split('_');
-          const serviceName = serviceParts[0];
-          const duration = parseInt(serviceParts[1], 10);
-          const isComposite = serviceName.includes('+');
-          const segments = isComposite
-            ? serviceName.split('+').map(s => s.trim())
-            : [serviceName];
-          const durationPerSegment = isComposite
-            ? [40, duration - 40]
-            : [duration];
-          const timeSegments = segments.map((seg, index) => {
-            const segmentStart = new Date(startTime.getTime() + (index === 0 ? 0 : durationPerSegment[0]) * 60000);
-            const segmentEnd = new Date(segmentStart.getTime() + durationPerSegment[index] * 60000);
-            return `${seg}: ${segmentStart.toLocaleString()} - ${segmentEnd.toLocaleString()}`;
+          let messageText = '預約成功！預約時間：\n';
+          this.formData.guests.forEach((guest, index) => {
+            const startTime = new Date(payload.appointmentTime);
+            const serviceParts = guest.service.split('_');
+            const serviceName = serviceParts[0];
+            const duration = parseInt(serviceParts[1], 10);
+            const isComposite = serviceName.includes('+');
+            const segments = isComposite
+              ? serviceName.split('+').map(s => s.trim())
+              : [serviceName];
+            const durationPerSegment = isComposite
+              ? [40, duration - 40]
+              : [duration];
+            const timeSegments = segments.map((seg, segIndex) => {
+              const segmentStart = new Date(startTime.getTime() + (segIndex === 0 ? 0 : durationPerSegment[0]) * 60000);
+              const segmentEnd = new Date(segmentStart.getTime() + durationPerSegment[segIndex] * 60000);
+              return `${seg}: ${segmentStart.toLocaleString()} - ${segmentEnd.toLocaleString()}`;
+            });
+            messageText += `顧客 ${String.fromCharCode(65 + index)} (${guest.service}${guest.master ? `, 師傅: ${guest.master}` : ''}):\n${timeSegments.join('\n')}\n`;
           });
+          messageText += '(提醒您!!可截圖此畫面以免忘記預約的時段)';
 
           this.message = {
             success: true,
-            text: `預約成功！預約時間：\n${timeSegments.join('\n')}\n(提醒您!!可截圖此畫面以免忘記預約的時段)`,
+            text: messageText,
           };
           this.showModal = true;
 
           this.formData.name = '';
           this.formData.phone = '';
-          this.formData.service = '';
-          this.formData.master = '';
+          this.formData.numPeople = 1;
+          this.formData.guests = [{ service: '', master: '' }];
           this.formData.appointmentDate = '';
           this.formData.appointmentHour = '';
           this.formData.appointmentMinutes = '00';
@@ -355,18 +390,18 @@ export default {
   max-width: 400px;
   margin: 40px auto;
   padding: 30px;
-  background-color: #FFFFFF; /* 白色背景，作為備用 */
-  background-image: url('/paper-texture.jpg'); /* 紙張紋理背景 */
-  background-repeat: repeat; /* 平鋪背景 */
-  background-size: auto; /* 保持紋理圖片的原始大小，適當平鋪 */
+  background-color: #FFFFFF;
+  background-image: url('/paper-texture.jpg');
+  background-repeat: repeat;
+  background-size: auto;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  font-family: 'Noto Serif TC', serif; /* 使用文青風格字體 */
+  font-family: 'Noto Serif TC', serif;
 }
 
 /* 標題 */
 .title {
-  color: #305450; /* 深青綠色 */
+  color: #305450;
   text-align: center;
   font-size: 24px;
   font-weight: 700;
@@ -375,11 +410,27 @@ export default {
 
 /* 標籤 */
 .label {
-  color: #305450; /* 深青綠色 */
+  color: #305450;
   display: block;
   margin-top: 15px;
   font-size: 16px;
   font-weight: 500;
+}
+
+/* 顧客區塊標題 */
+.guest-title {
+  color: #305450;
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+/* 顧客區塊 */
+.guest-section {
+  border-top: 1px solid #678772;
+  padding-top: 10px;
+  margin-top: 10px;
 }
 
 /* 輸入框和下拉選單 */
@@ -388,31 +439,28 @@ select {
   width: 100%;
   padding: 10px;
   margin-top: 5px;
-  border: 2px solid #678772; /* 柔和青綠色邊框 */
+  border: 2px solid #678772;
   border-radius: 8px;
   font-size: 16px;
-  background-color: #F5F5F5; /* 淺灰色背景 */
+  background-color: #F5F5F5;
   transition: border-color 0.3s ease;
-  font-family: 'Noto Serif TC', serif; /* 應用字體 */
-  color: #333333; /* 深灰色文字 */
+  font-family: 'Noto Serif TC', serif;
+  color: #333333;
 }
 
-/* 確保下拉選單的選項文字顏色為深灰色 */
 select option {
-  color: #333333; /* 深灰色文字 */
+  color: #333333;
 }
 
-/* 禁用選項 */
 select option:disabled {
-  color: #999999; /* 禁用選項使用較淺的灰色 */
+  color: #999999;
   background-color: #E0E0E0;
 }
 
-/* 確保聚焦時的樣式 */
 input:focus,
 select:focus {
   outline: none;
-  border-color: #305450; /* 聚焦時邊框變為深青綠色 */
+  border-color: #305450;
   background-color: #FFFFFF;
 }
 
@@ -421,7 +469,7 @@ button {
   margin-top: 20px;
   padding: 12px;
   width: 100%;
-  background: #305450; /* 深青綠色 */
+  background: #305450;
   color: #FFFFFF;
   border: none;
   border-radius: 8px;
@@ -429,20 +477,20 @@ button {
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  font-family: 'Noto Serif TC', serif; /* 應用字體 */
+  font-family: 'Noto Serif TC', serif;
 }
 
 button:hover {
-  background: #3E6A66; /* 稍微變亮 */
+  background: #3E6A66;
 }
 
 /* 當日可預約時段按鈕 */
 .available-times-button {
-  background: #678772; /* 柔和青綠色 */
+  background: #678772;
 }
 
 .available-times-button:hover {
-  background: #74917C; /* 稍微變亮 */
+  background: #74917C;
 }
 
 /* 彈出視窗樣式 */
@@ -452,7 +500,7 @@ button:hover {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5); /* 半透明背景 */
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -472,19 +520,19 @@ button:hover {
 }
 
 .success-modal {
-  background-color: #678772; /* 柔和青綠色 */
+  background-color: #678772;
   color: #FFFFFF;
 }
 
 .error-modal {
-  background-color: #F44336; /* 柔和紅色 */
+  background-color: #F44336;
   color: #FFFFFF;
 }
 
 .modal-button {
   margin-top: 20px;
   padding: 10px 20px;
-  background: #305450; /* 深青綠色 */
+  background: #305450;
   color: #FFFFFF;
   border: none;
   border-radius: 8px;
@@ -496,7 +544,7 @@ button:hover {
 }
 
 .modal-button:hover {
-  background: #3E6A66; /* 稍微變亮 */
+  background: #3E6A66;
 }
 
 /* 版權標示 */
@@ -504,7 +552,7 @@ button:hover {
   text-align: center;
   margin-top: 30px;
   font-size: 12px;
-  color: #678772; /* 柔和青綠色 */
-  font-family: 'Noto Serif TC', serif; /* 應用字體 */
+  color: #678772;
+  font-family: 'Noto Serif TC', serif;
 }
 </style>
