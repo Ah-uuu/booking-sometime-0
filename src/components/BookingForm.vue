@@ -106,7 +106,7 @@ export default {
         appointmentMinutes: '00',
       },
       message: null,
-      showModal: false, // 控制彈出視窗的顯示
+      showModal: false,
       serviceDurations: {
         '半身按摩_30': 30,
         '半身按摩_60': 60,
@@ -234,11 +234,11 @@ export default {
       try {
         if (!this.formData.service || !this.formData.appointmentDate) {
           this.message = { success: false, text: '請選擇按摩項目和日期！' };
-          this.showModal = true; // 顯示彈出視窗
+          this.showModal = true;
           return;
         }
         this.message = { success: false, text: '排查進行中 過程需要數秒 請稍等片刻...' };
-        this.showModal = true; // 顯示彈出視窗
+        this.showModal = true;
 
         const response = await axios.get(`https://booking-k1q8.onrender.com/available-times?service=${this.formData.service}&date=${this.formData.appointmentDate}`);
         if (response.data.success) {
@@ -303,7 +303,7 @@ export default {
             success: true,
             text: `預約成功！預約時間：\n${timeSegments.join('\n')}\n(提醒您!!可截圖此畫面以免忘記預約的時段)`,
           };
-          this.showModal = true; // 顯示彈出視窗
+          this.showModal = true;
 
           this.formData.name = '';
           this.formData.phone = '';
@@ -319,16 +319,14 @@ export default {
 
         this.message = {
           success: false,
-          text: errorMessage.includes('請點擊「當日可預約時段」')
-            ? errorMessage
-            : `${errorMessage}\n${error.response?.data?.nextAvailableTime ? `目前最快可預約時段：${error.response.data.nextAvailableTime}` : ''}`,
+          text: errorMessage,
         };
-        this.showModal = true; // 顯示彈出視窗
+        this.showModal = true;
       }
     },
     closeModal() {
-      this.showModal = false; // 關閉彈出視窗
-      this.message = null; // 清空訊息
+      this.showModal = false;
+      this.message = null;
     },
   },
 };
