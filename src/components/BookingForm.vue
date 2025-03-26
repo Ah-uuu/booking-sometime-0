@@ -125,8 +125,10 @@ export default {
         { name: '小周 2號', offDays: [6, 0], offDaysText: '休六日' },
         { name: 'Alan 7號', offDays: [1, 2, 3, 4, 5], offDaysText: '休一到五' },
         { name: 'Vincent 8號', offDays: [6, 0], offDaysText: '休六日' },
+        { name: '楊 9號', offDays: [4, 5], offDaysText: '休四五' },
         { name: '魚丸 12號', offDays: [5], offDaysText: '休五' },
-        { name: '小力 30號', offDays: [1, 2], offDaysText: '休一二' },
+        { name: 'Flame 24號', offDays: [2, 3], offDaysText: '休二三' },
+        { name: '小力 30號', offDays: [1, 2], offDaysText: '休一二 ♀' },
       ],
     };
   },
