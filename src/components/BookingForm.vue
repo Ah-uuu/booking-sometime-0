@@ -198,7 +198,12 @@ export default {
       const currentHour = new Date().getHours();
       const currentMinute = new Date().getMinutes();
 
-      if (this.formData.appointmentHour === '21' || this.formData.appointmentHour === '22') {
+      // 根據日期判斷是否為週一到週四或週五到週日
+      const dayOfWeek = selectedDate.getDay();
+      const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 4;
+      const lastHour = isWeekday ? '21' : '22';
+
+      if (this.formData.appointmentHour === lastHour) {
         this.formData.appointmentMinutes = '00';
       } else if (isToday && parseInt(this.formData.appointmentHour) === currentHour) {
         const nextAvailableMinute = this.availableMinutes.find(minute => parseInt(minute) > currentMinute);
@@ -211,9 +216,16 @@ export default {
       const isToday = selectedDate.toDateString() === new Date().toDateString();
       const currentHour = new Date().getHours();
       const currentMinute = new Date().getMinutes();
-      const isLateHour = this.formData.appointmentHour === '21' || this.formData.appointmentHour === '22';
 
-      if (isLateHour) return minute !== '00';
+      // 根據日期判斷是否為週一到週四或週五到週日
+      const dayOfWeek = selectedDate.getDay();
+      const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 4;
+      const lastHour = isWeekday ? '21' : '22'; // 週一到週四的最後一小時是 21:00，週五到週日是 22:00
+
+      // 如果選擇的是最後一小時（週一到週四的 21:00 或週五到週日的 22:00），只能選 00 分
+      const isLastHour = this.formData.appointmentHour === lastHour;
+
+      if (isLastHour) return minute !== '00';
       if (isToday && parseInt(this.formData.appointmentHour) === currentHour) {
         return parseInt(minute) <= currentMinute;
       }
