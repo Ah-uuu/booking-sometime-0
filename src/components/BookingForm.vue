@@ -1,9 +1,5 @@
 <template>
   <div class="booking-form">
-    <!-- 加入 LOGO -->
-    <div class="logo-container">
-      <img :src="logo" alt="桑time LOGO" class="logo" />
-    </div>
     <h2 class="title">桑time線上預約系統</h2>
     <form @submit.prevent="submitForm">
       <!-- 姓名 -->
@@ -93,12 +89,10 @@
 <script>
 import axios from 'axios';
 import moment from 'moment-timezone';
-import logo from '@/assets/logo.png'; // 引入圖片
 
 export default {
   data() {
     return {
-      logo, // 將引入的圖片存入 data
       formData: {
         name: '',
         phone: '',
@@ -154,12 +148,12 @@ export default {
         { value: '半身按摩_30', label: '半身按摩 (30 分鐘)', duration: 30 },
         { value: '半身按摩_60', label: '半身按摩 (60 分鐘)', duration: 60 },
         { value: '全身按摩_60', label: '全身按摩 (60 分鐘)', duration: 60 },
-        { value: '全身按摩_90', label: '全身按摩 (90 分鐘)', duration: 90 },
+        { value: '全身按摩_90', label: '全身按摩 (90 分鐘)', duration: 60 },
         { value: '全身按摩_120', label: '全身按摩 (120 分鐘)', duration: 120 },
         { value: '全身按摩_150', label: '全身按摩 (150 分鐘)', duration: 150 },
         { value: '腳底按摩_40', label: '腳底按摩 (40 分鐘)', duration: 40 },
         { value: '腳底按摩_70', label: '腳底按摩 (70 分鐘)', duration: 70 },
-        { value: '腳底+半身_70', label: '腳底+半身 (70 分鐘)', duration: 70 },
+        { value: '腳底+半 BODY_70', label: '腳底+半身 (70 分鐘)', duration: 70 },
         { value: '腳底+全身_100', label: '腳底+全身 (100 分鐘)', duration: 100 },
         { value: '腳底+全身_130', label: '腳底+全身 (130 分鐘)', duration: 130 },
       ];
@@ -348,17 +342,6 @@ export default {
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   font-family: 'Roboto', sans-serif;
-}
-
-/* LOGO 容器 */
-.logo-container {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.logo {
-  width: 100px; /* 調整 LOGO 大小 */
-  height: 100px;
 }
 
 /* 標題 */
