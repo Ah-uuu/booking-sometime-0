@@ -48,8 +48,42 @@
         </option>
       </select>
 
-      <!-- 按摩項目與指定師傅（動態渲染） -->
-      <div v-for="(guest, index) in formData.guests" :key="index" class="guest-section">
+      <!-- 當人數為 1 時，直接顯示按摩項目與指定師傅 -->
+      <div v-if="formData.numPeople === 1">
+        <!-- 按摩項目 -->
+        <label for="service-0" class="label">按摩項目：</label>
+        <select
+          id="service-0"
+          v-model="formData.guests[0].service"
+          required
+        >
+          <option
+            v-for="option in serviceOptions"
+            :key="option.value"
+            :value="option.value"
+            :disabled="isServiceDisabled(option.duration)"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+
+        <!-- 指定師傅 -->
+        <label for="master-0" class="label">指定師傅（可選）：</label>
+        <select id="master-0" v-model="formData.guests[0].master">
+          <option value="">不指定</option>
+          <option
+            v-for="therapist in therapists"
+            :key="therapist.name"
+            :value="therapist.name"
+            :disabled="isTherapistOff(therapist.offDays)"
+          >
+            {{ therapist.name }} ({{ therapist.offDaysText }})
+          </option>
+        </select>
+      </div>
+
+      <!-- 當人數為 2 或 3 時，使用複合選單 -->
+      <div v-else v-for="(guest, index) in formData.guests" :key="index" class="guest-section">
         <h3 class="guest-title">顧客 {{ String.fromCharCode(65 + index) }}</h3>
 
         <!-- 按摩項目 -->
@@ -344,7 +378,9 @@ export default {
               const segmentEnd = new Date(segmentStart.getTime() + durationPerSegment[segIndex] * 60000);
               return `${seg}: ${segmentStart.toLocaleString()} - ${segmentEnd.toLocaleString()}`;
             });
-            messageText += `顧客 ${String.fromCharCode(65 + index)} (${guest.service}${guest.master ? `, 師傅: ${guest.master}` : ''}):\n${timeSegments.join('\n')}\n`;
+            // 當人數為 1 時，不顯示「顧客 A」
+            const guestLabel = this.formData.numPeople === 1 ? '' : `顧客 ${String.fromCharCode(65 + index)} `;
+            messageText += `${guestLabel}(${guest.service}${guest.master ? `, 師傅: ${guest.master}` : ''}):\n${timeSegments.join('\n')}\n`;
           });
           messageText += '(提醒您!!可截圖此畫面以免忘記預約的時段)';
 
