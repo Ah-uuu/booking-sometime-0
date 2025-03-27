@@ -111,7 +111,7 @@
             v-for="therapist in therapists"
             :key="therapist.name"
             :value="therapist.name"
-            :disabled="isTherapistOff(therapist.offDays)"
+            :disabled="isTherapistOff(therapist.offDays) || isTherapistSelectedByOthers(index, therapist.name)"
           >
             {{ therapist.name }} ({{ therapist.offDaysText }})
           </option>
@@ -229,6 +229,16 @@ export default {
       const selectedDate = new Date(this.formData.appointmentDate);
       const dayOfWeek = selectedDate.getDay();
       return offDays.includes(dayOfWeek);
+    },
+    // 新增方法：檢查師傅是否已被其他顧客選中
+    isTherapistSelectedByOthers(currentIndex, therapistName) {
+      // 當人數為 1 時，不需要檢查
+      if (this.formData.numPeople === 1) return false;
+
+      // 檢查其他顧客是否已選擇該師傅
+      return this.formData.guests.some((guest, index) => {
+        return index !== currentIndex && guest.master === therapistName && guest.master !== '';
+      });
     },
     isHourDisabled(hour) {
       if (!this.formData.appointmentDate) return false;
